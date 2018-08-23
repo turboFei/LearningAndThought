@@ -4,7 +4,7 @@
 
 spark sql是 apache spark的其中一个模块，主要用于进行结构化数据的处理。spark sql的底层执行还是调用rdd，在之前的文章中提过rdd的执行流程，因此本文主要讲解一下从sql到底层rdd的对接。通过观察spark sql 模块的源码，源码分为四个部分，如下图。
 
-![](imgs/spark-sql/sql-model.png)
+![sql-model](sm)
 
 
 在官方github的sql模块readme文件有如下描述。
@@ -314,4 +314,6 @@ protected def doExecute(): RDD[InternalRow]
 这个函数对应很多子类，每个子类的第一句基本都是`child.execute()`,可见这是在构建lineage。也就是一条链，把所有可执行计划串联起来。
 
 这里的doExecute返回的是一个中间类型的RDD。
+
+[sm]:imgs/spark-sql/sql-model.png
 
