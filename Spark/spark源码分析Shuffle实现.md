@@ -24,7 +24,7 @@ shuffle是Mapreduce框架中一个特定的phase，介于Map和Reduce之间。sh
 
 
 
-```
+```Java
 @Override
 public void write(Iterator<Product2<K, V>> records) throws IOException {
   assert (partitionWriters == null);
