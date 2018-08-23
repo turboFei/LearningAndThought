@@ -4,9 +4,7 @@
 
 spark sql是 apache spark的其中一个模块，主要用于进行结构化数据的处理。spark sql的底层执行还是调用rdd，在之前的文章中提过rdd的执行流程，因此本文主要讲解一下从sql到底层rdd的对接。通过观察spark sql 模块的源码，源码分为四个部分，如下图。
 
-<div align="center">
-<img src="./imgs/spark-sql/sql-model.png" title="sql-model" width="60%">
-</div>
+<img src="imgs/spark-sql/sql-model.png" title="sql-model" width="60%">
 
 
 在官方github的sql模块readme文件有如下描述。
