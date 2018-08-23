@@ -1,6 +1,6 @@
 # LearingAndThought
 
-## [Spark Core：RDD理解与解读](./slides/spark_core/rdd_basics.html)
+## [Spark Core：RDD理解与解读](https://netease-bigdata.github.io/ne-spark-courseware/slides/spark_core/rdd_basics.html#1)
 
 讲述了RDD的源码角度理解与Spark机制。
 - 开始日期: 2018-07-26
