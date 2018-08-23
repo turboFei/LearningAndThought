@@ -4,7 +4,7 @@
 
 spark sql是 apache spark的其中一个模块，主要用于进行结构化数据的处理。spark sql的底层执行还是调用rdd，在之前的文章中提过rdd的执行流程，因此本文主要讲解一下从sql到底层rdd的对接。通过观察spark sql 模块的源码，源码分为四个部分，如下图。
 
-![sql-model](sm)
+![sql-model](../imgs/spark-sql/sql-model.png)
 
 
 在官方github的sql模块readme文件有如下描述。
@@ -43,7 +43,7 @@ val teenagersDF = spark.sql("SELECT SUM(v) FROM (SELECT score.id, 100+80+ score.
 
 此部分主要是对sql语句进行解析。判断一条sql语句是否符合要求，并且进行各部分的划分，比如哪些是操作，哪些是得到的结果等等。
 
-![](imgs/spark-sql/parser.png)
+![](../imgs/spark-sql/parser.png)
 
 
 
@@ -112,7 +112,7 @@ override def parsePlan(sqlText: String): LogicalPlan = parse(sqlText) { parser =
 
 此部分是对之前得到的逻辑计划进行分析，比如这个字段到底应该是什么类型，等等，不是很熟悉编译。
 
-![](imgs/spark-sql/analysis.png)
+![](../imgs/spark-sql/analysis.png)
 
 进入到Dataset类的ofRows函数。
 
@@ -138,7 +138,7 @@ ofRows函数第二行是对逻辑计划进行确认分析，里面涉及到分�
 
 此部分主要是对逻辑计划进行优化， 例如谓词下推等等。
 
-![](imgs/spark-sql/optimizer.png)
+![](../imgs/spark-sql/optimizer.png)
 
 然后第三行，就是生成一个Dataset[Row]，前面提到过，其实这就是dataFrame。
 
@@ -315,5 +315,4 @@ protected def doExecute(): RDD[InternalRow]
 
 这里的doExecute返回的是一个中间类型的RDD。
 
-[sm]:imgs/spark-sql/sql-model.png
 
