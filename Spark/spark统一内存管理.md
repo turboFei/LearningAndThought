@@ -1,16 +1,6 @@
----
-layout: post
-category: spark
-tagline: ""
-summary: spark统一内存管理是spark1.6.0的新特性，是对shuffle memory 和 storage memory 进行统一的管理，打破了以往的参数限制。
-title: spark统一内存管理
-tags: [spark]
----
-{% include JB/setup %}
 ### Background ###
-{{ page.summary }}
 
-
+spark统一内存管理是spark1.6.0的新特性，是对shuffle memory 和 storage memory 进行统一的管理，打破了以往的参数限制。
 
 ## 非统一内存管理 ##
 

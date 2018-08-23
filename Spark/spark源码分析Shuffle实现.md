@@ -1,18 +1,6 @@
----
-layout: post
-category: spark
-tagline: "spark Shuffle"
-summary: spark shuff部分是spark源码的重要组成部分，shuffle发生在stage的交界处，对于spark的性能有重要影响，源码更新后，spark的shuffle机制也不一样，本文分析spark2.0的shuffle实现。
-tags: [spark,shuffle]
----
-{% include JB/setup %}
-目录
-
-* toc
-{:toc}
 
 ### Background ###
-{{ page.summary }}
+spark shuff部分是spark源码的重要组成部分，shuffle发生在stage的交界处，对于spark的性能有重要影响，源码更新后，spark的shuffle机制也不一样，本文分析spark2.0的shuffle实现。
 
 本文基于spark2.0。
 

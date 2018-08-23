@@ -1,19 +1,5 @@
----
-layout: post
-category: spark
-tagline: "sizeEstimate"
-summary: spark是一个内存计算框架，因此内存是重要的资源，合理的使用的内存在spark应用在执行过程中非常重要。在使用内存的过程，spark会采用抽样的方法预测出所需要的内存，并预先分配内存。本文会就内存预测机制进行源码的解读。
-tags: [spark,内存]
----
-{% include JB/setup %}
-目录
-
-* toc
-{:toc}
-
-
-
 ### Background ###
+
 {{ page.summary }}
 
 

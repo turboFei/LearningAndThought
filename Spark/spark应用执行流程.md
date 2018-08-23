@@ -1,20 +1,6 @@
----
-layout: post
-category: spark
-tagline: ""
-summary: 从最简单的spark应用WordCount入手，分析rdd链，分析job如何提交，task如何提交，从全局了解spark应用的执行流程。
-tags: [spark]
----
-{% include JB/setup %}
-目录
+从最简单的spark应用WordCount入手，分析rdd链，分析job如何提交，task如何提交，从全局了解spark应用的执行流程。
 
-* toc
-{:toc}
-
-### Background ###
-{{ page.summary }}
-
-## Word Count ##
+###Word Count
 
 word count是spark 最基本的小程序，主要功能就是统计一个文件里面各个单词出现的个数。代码很简洁，如下。
 
@@ -35,6 +21,7 @@ object SparkWC {
 ```
 
 ### 理论剖析 ###
+
 里面的RDD链，用他们的操作表示，就是textFile->flatMap->map->reduceBykey->saveAsTextFile.
 
 spark里面有两种操作，`action` 和`transformation`，其中action会触发提交job的操作，transformation不会触发job，只是进行rdd的转换。而不同transformation操作的rdd链两端的依赖关系也不同，spark中的rdd依赖有两种，分别是`narrow dependency` 和 `wide dependency` ,这两种依赖如下图所示。
