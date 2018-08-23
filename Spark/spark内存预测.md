@@ -1,10 +1,4 @@
-### Background ###
-
-{{ page.summary }}
-
-
-
-## sizeTracker ##
+## sizeTracker
 
 
 
@@ -14,7 +8,7 @@ SizeTracker的estimateSize方法就是预测当前集合的size。
 
 
 
-```
+```Scala
 /**
  * Estimate the current size of the collection in bytes. O(1) time.
  */
