@@ -1,6 +1,6 @@
-## Background ##
+[Deep Dive into Spark SQL’s Catalyst Optimizer](https://databricks.com/blog/2015/04/13/deep-dive-into-spark-sqls-catalyst-optimizer.html)
 
-## Spark Sql概述##
+## Spark Sql概述
 
 spark sql是 apache spark的其中一个模块，主要用于进行结构化数据的处理。spark sql的底层执行还是调用rdd，在之前的文章中提过rdd的执行流程，因此本文主要讲解一下从sql到底层rdd的对接。通过观察spark sql 模块的源码，源码分为四个部分，如下图。
 
@@ -37,7 +37,7 @@ spark sql是 apache spark的其中一个模块，主要用于进行结构化数�
 val teenagersDF = spark.sql("SELECT SUM(v) FROM (SELECT score.id, 100+80+ score.math_score +score.english_score AS v FROM people JOIN score WHERE  people.id=score.id AND people.age >100) tmp")
 ```
 
-### sql 语句-> Unresolved LogicalPlan###
+### sql 语句-> Unresolved LogicalPlan
 
 
 
@@ -108,7 +108,7 @@ override def parsePlan(sqlText: String): LogicalPlan = parse(sqlText) { parser =
 
 而此处的parse函数是使用的Antlr(一个开源语法分析器)来对sql语句进行解析，lexer是其词法分析器，然后spark使用自身的sqlBaseParser对sql语句进行语法分析，结合parse和parsePlan函数，得到了sql语句的`UnresolvedLogicalPlan`.
 
-### Resolved LogicalPlan###
+### Resolved LogicalPlan
 
 此部分是对之前得到的逻辑计划进行分析，比如这个字段到底应该是什么类型，等等，不是很熟悉编译。
 
@@ -134,7 +134,7 @@ def executePlan(plan: LogicalPlan): QueryExecution = new QueryExecution(sparkSes
 
 ofRows函数第二行是对逻辑计划进行确认分析，里面涉及到分析操作，分析是对之前逻辑计划里面的属性进行分析。分析的源码我就不贴了，分析是使用一套既定的规则，然后进行多次迭代，知道分析结果达到一个固定点或者到达最高迭代次数停止。得到`resolvedLogicalPlan`.
 
-### OptimizedLogicalPlan###
+### OptimizedLogicalPlan
 
 此部分主要是对逻辑计划进行优化， 例如谓词下推等等。
 
@@ -190,7 +190,7 @@ lazy val optimizedPlan: LogicalPlan = sparkSession.sessionState.optimizer.execut
 
 这里调用了一些列，调用到optimizedPlan，其实也是进行规则优化，基于一系列规则，到不动点或者最大迭代次数退出优化。这就得到了`optimizedLogicalPlan`.
 
-### PhysicalPlan###
+### PhysicalPlan
 
 回到前面的sparkPlan懒变量，最后一句，planner.plan对之前的 `optimizedLogicalPlan`进行转化生成phsicalPlan。此处的next是操作是获得返回的physicalPlan迭代器中的第一个physicalPlan。
 
@@ -261,7 +261,7 @@ def plan(plan: LogicalPlan): Iterator[PhysicalPlan] = {
 
 没看明白，知识欠缺。大概就是得到一系列physicalPlan，然后进行剪枝，筛除掉性能不好的，这就得到了`physicalPlan`迭代器，然后通过前面说的next函数，得到迭代器头部的`physicalPlan`，应该是最好的那个。
 
-###  可执行的物理计划###
+###  可执行的物理计划
 
 在得到物理计划sparkPlan之后会执行下面的函数，prepareForExecution(sparkPlan)，得到可执行的物理计划。
 
@@ -288,9 +288,9 @@ protected def preparations: Seq[Rule[SparkPlan]] = Seq(
   ReuseSubquery(sparkSession.sessionState.conf))
 ```
 
-看注释以及源码，理解，就是又是一些规则，然后对逻辑计划不断使用这些规则进行完善，就是把规则按顺序运用一遍，[scala的 foldleft用法参考这里](https://blog.csdn.net/oopsoom/article/details/23447317),不得不说scala语法真多。
+看源码这里，perpare分为六部分，第一部分是抽取出python的UDF来优化，由于对python不了解，所以此处不讲。第二部分是对子查询进行递归操作。第三部分是ensureRequirement，这部分是给执行计划添加exchange(相当于shuffle)以及排序。第四部分是codegen，这是在类wholeStageCodegen中完成，这里应该是在针对整个stage的代码进行优化，看源码是给一个模板， 然后将相应部分套到这么源码模板里面，最后生成优化代码。最后两部分是对之后相同的操作进行重复使用前面的结果。
 
-### 执行 ###
+### 执行 
 
 可以看到在获得获得可执行计划之后就是执行，
 
