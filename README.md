@@ -1,22 +1,36 @@
 # LearingAndThought
 
 ## [Spark Sql 流程分析](./Spark/Spark-Sql-Analysis.md)
+
 spark sql 源码流程分析
 - 开始日期: 2018-08-06
 - 期望日期: 2018-08-27
 - 状态:  WIP
 
-##[Spark Sql CBO](./Spark/spark-sql-cbo.md)
+## [Spark Sql CBO](./Spark/spark-sql-cbo.md)
+
 在spark sql中的基于代价优化机制.
 - 开始日期: 2018-08-23
 - 期望日期: 2018-08-27
 - 状态:  WIP
 
-##[Carbon data](./Spark/carbon-data.md)
+## [Carbon data](./Spark/carbon-data.md)
+
 carbon data 调研.
 - 开始日期: 2018-08-23
+
 - 期望日期: 2018-08-31
+
 - 状态:  WIP
+
+## [Spark External Shuffle Service](./Spark/external-shuffle-service.md)
+
+讲解一下什么是external shuffle service
+
+- 开始日期： 2018-08-24
+- 期望日期： 2018-08-26
+- 状态： WIP
+
 
 
 
