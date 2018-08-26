@@ -5,14 +5,14 @@
 spark sql 源码流程分析
 - 开始日期: 2018-08-06
 - 期望日期: 2018-08-27
-- 状态:  WIP
+- 状态:  待完善
 
 ## [Spark Sql CBO](./Spark/spark-sql-cbo.md)
 
 在spark sql中的基于代价优化机制.
 - 开始日期: 2018-08-23
 - 期望日期: 2018-08-27
-- 状态:  WIP
+- 状态:  待完善
 
 ## [Carbon data](./Spark/carbon-data.md)
 
@@ -21,7 +21,7 @@ carbon data 调研.
 
 - 期望日期: 2018-08-31
 
-- 状态:  WIP
+- 状态:  待完善
 
 ## [Spark External Shuffle Service](./Spark/external-shuffle-service.md)
 
