@@ -17,8 +17,6 @@ spark sql是 apache spark的其中一个模块，主要用于进行结构化数�
 
 - HiveServer and CLI support (sql/hive-thriftserver) - Includes support for the SQL CLI (bin/spark-sql) and a HiveServer2 (for JDBC/ODBC) compatible server.
 
-  
-  
 本文主要讲解core和catalyst模块。首先给一个spark sql语句执行流程，来方便对后续内容进行整体把握。
 
 1. SQL 语句经过 SqlParser 解析成 Unresolved LogicalPlan;
@@ -110,7 +108,7 @@ override def parsePlan(sqlText: String): LogicalPlan = parse(sqlText) { parser =
 
 ### Resolved LogicalPlan
 
-此部分是对之前得到的逻辑计划进行分析，比如这个字段到底应该是什么类型，等等，不是很熟悉编译。
+此部分是对之前得到的逻辑计划进行分析，比如这个字段到底应该是什么类型。
 
 ![](../imgs/spark-sql/analysis.png)
 
@@ -132,7 +130,67 @@ def executePlan(plan: LogicalPlan): QueryExecution = new QueryExecution(sparkSes
 
 这个对象是很重要的一个对象,涉及到前面的`UnresolvedLogicalPlan`的分析、优化、转物理计划以及ToRDD所有操作。
 
-ofRows函数第二行是对逻辑计划进行确认分析，里面涉及到分析操作，分析是对之前逻辑计划里面的属性进行分析。分析的源码我就不贴了，分析是使用一套既定的规则，然后进行多次迭代，知道分析结果达到一个固定点或者到达最高迭代次数停止。得到`resolvedLogicalPlan`.
+
+
+
+
+`org.apache.spark.sql.catalyst.analysisAnalyzer`是一个用于执行analysis的类，这个类继承RuleExecutor，其中定义了一系列的解析规则顺序执行来解析这些字段和函数等里面的属性。
+
+```
+ Batch("Substitution", fixedPoint,
+      CTESubstitution,
+      WindowsSubstitution,
+      EliminateUnions,
+      new SubstituteUnresolvedOrdinals(conf)),
+    Batch("Resolution", fixedPoint,
+      ResolveTableValuedFunctions ::
+      ResolveRelations ::
+      ResolveReferences ::
+      ResolveCreateNamedStruct ::
+      ResolveDeserializer ::
+      ResolveNewInstance ::
+      ResolveUpCast ::
+      ResolveGroupingAnalytics ::
+      ResolvePivot ::
+      ResolveOrdinalInOrderByAndGroupBy ::
+      ResolveMissingReferences ::
+      ExtractGenerator ::
+      ResolveGenerate ::
+      ResolveFunctions ::
+      ResolveAliases ::
+      ResolveSubquery ::
+      ResolveWindowOrder ::
+      ResolveWindowFrame ::
+      ResolveNaturalAndUsingJoin ::
+      ExtractWindowExpressions ::
+      GlobalAggregates ::
+      ResolveAggregateFunctions ::
+      TimeWindowing ::
+      ResolveInlineTables ::
+      TypeCoercion.typeCoercionRules ++
+      extendedResolutionRules : _*),
+    Batch("Nondeterministic", Once,
+      PullOutNondeterministic),
+    Batch("UDF", Once,
+      HandleNullInputsForUDF),
+    Batch("FixNullability", Once,
+      FixNullability),
+    Batch("Cleanup", fixedPoint,
+      CleanupAliases)
+```
+
+
+
+Spark sql使用Catalyst规则和catalog来查询这些表是否存在，并来获得查询需要的具体属性。
+
+- 向catalog查询relations(看ResolveRelation方法)
+- 根据属性的名字做映射
+- 对名字相同的attribute给unique id标注：例如前面sql语句的ta.key =  tb.key， 会被解析为 key#1L = key#8L
+- 对expressions的类型做解析：例如` 1+2+ta.value`的类型是什么
+- 如果有UDF，还要解析UDF
+- 等等
+
+得到`resolvedLogicalPlan`.
 
 ### OptimizedLogicalPlan
 
