@@ -1,5 +1,13 @@
 # LearingAndThought
 
+## [Spark Sql Catalyst](./Spark/spark-sql-catalyst.md)
+
+Catalyst分析报告
+
+- 开始日期: 2018-09-20
+- 期望日期: 2018-09-23
+- 状态:  完成
+
 ## [Spark Sql 流程分析](./Spark/Spark-Sql-Analysis.md)
 
 spark sql 源码流程分析

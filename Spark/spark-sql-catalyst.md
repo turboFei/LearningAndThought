@@ -43,7 +43,7 @@ FROM   ta JOIN tb
 
 
 
-![](/Users/bbw/todo/LearingAndThought/imgs/spark_catalyst/sql-ast.png)
+![](../imgs/spark_catalyst/sql-ast.png)
 
 #### Rule
 
@@ -71,7 +71,7 @@ spark sql是 apache spark的其中一个模块，主要用于进行结构化数�
 
 
 
-![](/Users/bbw/todo/LearingAndThought/imgs/spark_catalyst/catalyst.png)
+![](../imgs/spark_catalyst/catalyst.png)
 
 SQL语句到转换为rdd总共分为以下阶段，[具体参考Spark sql 执行流程-从sql string 到 rdd](./Spark-sql-Analysis.md)
 
