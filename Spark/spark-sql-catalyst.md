@@ -304,7 +304,7 @@ val source = s"""
             :     +- *FileScan json [key#0,value#1L] Batched: false, Format: JSON, Location: InMemoryFileIndex[file:/Users/bbw/todo/sparkApp/data/kv.json], PartitionFilters: [], PushedFilters: [IsNotNull(key)], ReadSchema: struct<key:string,value:bigint>
             +- BroadcastExchange HashedRelationBroadcastMode(List(input[0, string, true]))
                +- *Project [key#6]
-                  +- *Filter ((isnotnull(value#7L) && (value#7L > 17)) && isnotnull(key#6))
+                  +- *Filter ((isnotnull(value#7L) && (value#7L > 90)) && isnotnull(key#6))
                      +- *FileScan json [key#6,value#7L] Batched: false, Format: JSON, Location: InMemoryFileIndex[file:/Users/bbw/todo/sparkApp/data/kv.json], PartitionFilters: [], PushedFilters: [IsNotNull(value), GreaterThan(value,90), IsNotNull(key)], ReadSchema: struct<key:string,value:bigint>
 ```
 
