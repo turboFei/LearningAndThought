@@ -35,7 +35,7 @@ FROM   ta JOIN tb
 'Project [unresolvedalias('sum('v), None)]
 +- 'SubqueryAlias tmp
    +- 'Project ['ta.key, ((1 + 2) + 'ta.value) AS v#12]
-      +- 'Filter (('ta.key = 'tb.key) && ('tb.value > 17))
+      +- 'Filter (('ta.key = 'tb.key) && ('tb.value > 90))
          +- 'Join Inner
             :- 'UnresolvedRelation `ta`
             +- 'UnresolvedRelation `tb`
@@ -121,7 +121,7 @@ sum(v): bigint
 Aggregate [sum(v#12L) AS sum(v)#28L]
 +- SubqueryAlias tmp
    +- Project [key#0, (cast((1 + 2) as bigint) + value#1L) AS v#12L]
-      +- Filter ((key#0 = key#6) && (value#7L > cast(17 as bigint)))
+      +- Filter ((key#0 = key#6) && (value#7L > cast(90 as bigint)))
          +- Join Inner
             :- SubqueryAlias ta, `ta`
             :  +- Relation[key#0,value#1L] json
@@ -189,7 +189,7 @@ Aggregate [sum(v#12L) AS sum(v)#28L]
       :- Filter isnotnull(key#0)
       :  +- Relation[key#0,value#1L] json
       +- Project [key#6]
-         +- Filter ((isnotnull(value#7L) && (value#7L > 17)) && isnotnull(key#6))
+         +- Filter ((isnotnull(value#7L) && (value#7L > 90)) && isnotnull(key#6))
             +- Relation[key#6,value#7L] json
 ```
 
@@ -305,7 +305,7 @@ val source = s"""
             +- BroadcastExchange HashedRelationBroadcastMode(List(input[0, string, true]))
                +- *Project [key#6]
                   +- *Filter ((isnotnull(value#7L) && (value#7L > 17)) && isnotnull(key#6))
-                     +- *FileScan json [key#6,value#7L] Batched: false, Format: JSON, Location: InMemoryFileIndex[file:/Users/bbw/todo/sparkApp/data/kv.json], PartitionFilters: [], PushedFilters: [IsNotNull(value), GreaterThan(value,17), IsNotNull(key)], ReadSchema: struct<key:string,value:bigint>
+                     +- *FileScan json [key#6,value#7L] Batched: false, Format: JSON, Location: InMemoryFileIndex[file:/Users/bbw/todo/sparkApp/data/kv.json], PartitionFilters: [], PushedFilters: [IsNotNull(value), GreaterThan(value,90), IsNotNull(key)], ReadSchema: struct<key:string,value:bigint>
 ```
 
 可以看出，可执行计划里给了Location，到哪里去读数据。broadcastExchange，怎么分配数据。BroadcastHashJoin，进行什么种类的join等等。

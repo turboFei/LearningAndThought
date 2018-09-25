@@ -8,17 +8,26 @@ Catalyst分析报告
 - 期望日期: 2018-09-23
 - 状态:  完成
 
+## [Spark Sql CBO](./Spark/spark-sql-cbo.md)
+
+spark CBO原理分析，性能测试报告。
+
+- 开始日期: 2018-08-23
+- 期望日期: 2018-08-27
+- 状态:  WIP
+
+## [Spark Adaptive Execution](./Spark/spark-adaptive-execution.md)
+
+Spark Adaptive execution 分析，性能测试报告。
+
+- 开始日期： 2018-09-23
+- 期望日期： 2018-09-27
+- 状态： WIP
+
 ## [Spark Sql 流程分析](./Spark/Spark-Sql-Analysis.md)
 
 spark sql 源码流程分析
 - 开始日期: 2018-08-06
-- 期望日期: 2018-08-27
-- 状态:  待完善
-
-## [Spark Sql CBO](./Spark/spark-sql-cbo.md)
-
-在spark sql中的基于代价优化机制.
-- 开始日期: 2018-08-23
 - 期望日期: 2018-08-27
 - 状态:  待完善
 
