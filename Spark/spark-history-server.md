@@ -28,7 +28,7 @@
 > >
 > >  > 此前在线下测试了功能性和兼容性，测试结果表明功能性完好，兼容spark 各个版本的log(spark-2.1.2 spark-1.6.3).
 > >  >
-> >  > 目前已经在`spark1.lt.163.org`节点试运行半个月左右，目前设置查看application数量为50000，可以看到集群上近一个月application的日志。
+> >  > 目前已经在spark1.lt.163.org节点试运行半个月左右，设置查看application数量为50000，可以看到集群上近一个月application的日志, 运行稳定。
 
 ## 缺陷
 
@@ -52,6 +52,10 @@
 ##  升级指导
 
 安装包地址为：http://repo.bdms.netease.com/dev_packages/common/spark/spark-2.3.2-bin-ne-0.0.0.tgz
+
+md5文件： http://repo.bdms.netease.com/dev_packages/common/spark/spark-2.3.2-bin-ne-0.0.0.tgz.md5
+
+md5:  ae924a4ddba28319cc39e108271293e5  spark-2.3.2-bin-ne-0.0.0.tgz
 
 ### 手动升级
 
