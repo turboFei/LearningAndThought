@@ -137,7 +137,7 @@ spark.history.store.maxDiskUsage   20g
 
 ![image-20181010163929862](../imgs/spark-his/other-cnf.png)
 
-这里的`spark.history.store.path`需要注意，因为此处spark.history.kerberos.keytab使用的是`/etc/security/keytabs/spark2.headless.keytab`。在认证之后,
+这里的`spark.history.store.path`需要注意，**这是一个local目录，这个文件夹需要创建在spark-history-server所在节点**。因为此处spark.history.kerberos.keytab使用的是`/etc/security/keytabs/spark2.headless.keytab`。在认证之后,
 
 ```
 2018-10-10 16:37:16,195 [1222] - INFO  [main:Logging$class@54] - Changing view acls to: spark
