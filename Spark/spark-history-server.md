@@ -1,16 +1,63 @@
 # Spark History Server升级文档
 
-目前线上的spark history server 只能提供少量的application日志。
+## 社区基线
 
-最近测试了新版本的spark history server，在线上试运行近半个月，运行稳定，可以查看的application 日志数量更多，重启速度更快。
+2.3.2
 
-安装包地址为：http://repo.bdms.netease.com/dev_packages/common/spark/spark-2.3.2-bin-his-0.1.tgz
+## 版本说明
 
-## 手动升级
+> **该版本基于社区2.3.2**
+
+> >  NE-Spark - 版本号 ne-spark-2.3.2-0.0.0
+> >
+> >  解决线上问题
+> >
+> >  > spark history server对于用户和平台开发人员来说都是一个很有效的工具，可以帮助很好的把握应用的运行状况和定位问题。
+> >  >
+> >  > 目前线上运行的spark history server是基于社区2.1.2，这些老版本的history server存在以下问题：
+> >  >
+> >  > 1、老版本的history server将一切数据都存储在内存里，不依赖外部存储，这样的history server没有状态，在需要进行重启时，一切数据都要重新加载，处理。
+> >  >
+> >  > 2、老版本的history server可以查看的application list 很有限。因为需要把一切数据都放在内存，所以可查看的application list数目受到限制，目前线上的上限是2000条左右，甚至当天的application都不能查看日志，远远不能满足生产需求。
+> >  >
+> >  > 3、老版本的history server需要把一切数据都缓存在内存，如果内存占用严重，发生full gc时可能会造成不能及时查看应用日志。
+> >
+> >  新版本的history server解决了这些问题，依赖外部kv存储，可以将history server的数据和状态进行存储，缓解内存压力，可以支持查看大量的application 日志，满足生产需求，且在需要重启时，可以读取外部kv存储的数据，做到快速启动。
+> >
+> >  测试情况：
+> >
+> >  > 此前在线下测试了功能性和兼容性，测试结果表明功能性完好，兼容spark 各个版本的log(spark-2.1.2 spark-1.6.3).
+> >  >
+> >  > 目前已经在`spark1.lt.163.org`节点试运行半个月左右，目前设置查看application数量为50000，可以看到集群上近一个月application的日志。
+
+## 缺陷
+
+[NESPARK-148](http://jira.netease.com/browse/NESPARK-148)-[NE]\[2.1.2]The problems in current online Spark History Server
+
+## 任务
+
+[NESPARK-141](http://jira.netease.com/browse/NESPARK-141)-\[NE\]\[2.3.2\]Applying History Server on our online environments
+
+## 配置增改
+
+| 配置项                           | 配置文件           | 默认值 | 配置值                           | 功能简介                                                     |
+| -------------------------------- | ------------------ | ------ | -------------------------------- | ------------------------------------------------------------ |
+| spark.history.store.path         | spark-default.conf | null   | /usr/ndp/data/spark/historyStore | 用于缓存history  数据的本地文件夹，默认为空。如果不设置，所有数据将会放在内存中。 |
+| spark.history.store.maxDiskUsage | spark-default.conf | 10g    | 20g                              | spark.history.store.path可以使用的最大磁盘空间               |
+
+## 限制说明
+
+无
+
+##  升级指导
+
+安装包地址为：http://repo.bdms.netease.com/dev_packages/common/spark/spark-2.3.2-bin-ne-0.0.0.tgz
+
+### 手动升级
 
 将安装包解压，在conf/spark-env.sh中配置。
 
-spark-env.sh中所有配置选项都可从老版本history server配置文件拷贝，注意调大SPARK_DAEMON_MEMORY至40G。
+**spark-env.sh**中所有配置选项都可从老版本history server配置文件拷贝，注意调大SPARK_DAEMON_MEMORY至40G。
 
 ```
 # JVM内存设置40G，可按需调大
@@ -24,11 +71,11 @@ export LD_LIBRARY_PATH=/usr/ndp/current/mapreduce_client/lib/native:/usr/ndp/cur
 
 ```
 
-spark-default.conf配置如下：
+**spark-default.conf配置如下**：
 
 需要额外添加的配置项为`spark.history.store.path` `spark.history.store.maxDiskUsage`  ,spark.history.store.path 需要手动创建目录，spark.history.store.maxDiskUsage 设为20g。
 
-其他所有配置都可从老版本history server中拷贝，然后`spark.history.fs.cleaner.maxAge`调大至15d，`spark.history.ui.maxApplications`调大至50000(后续如果spark每天的应用数更多，可以调至100000),另外`spark.history.fs.numReplayThreads`设置为6(重要)。
+其他所有配置都可从老版本history server中拷贝，然后`spark.history.fs.cleaner.maxAge`调大至15d，`spark.history.ui.maxApplications`调大至50000(后续如果spark每天的应用数更多，可以调至100000),另外`spark.history.fs.numReplayThreads`设置为6(重要，因为将`spark.history.ui.maxApplications`调大之后，第一次启动时会拉取大量的数据，目前集群上设置的线程数是20，线程过多会造成网卡超载，目前线上机器核数为24，建议设置为核数的25%，即6)。
 
 参考如下：
 
@@ -38,14 +85,14 @@ spark.driver.extraLibraryPath /usr/ndp/current/mapreduce_client/lib/native:/usr/
 spark.eventLog.dir hdfs://hz-cluster3/user/spark/history
 spark.eventLog.enabled true
 spark.executor.extraLibraryPath /usr/ndp/current/mapreduce_client/lib/native:/usr/ndp/current/mapreduce_client/lib/native/Linux-amd64-64
-spark.history.fs.cleaner.interval 1d
+spark.history.fs.cleaner.interval 30min
 # 设置为保存15天日志
 spark.history.fs.cleaner.maxAge 15d
 # 按集群情况更改
 spark.history.fs.logDirectory hdfs://hz-cluster3/user/spark/history
 # 推荐设置为机器核数的25%，若太高，会造成第一次启动时，网络流量过大
 spark.history.fs.numReplayThreads 6
-spark.history.fs.update.interval 100s
+spark.history.fs.update.interval 60s
 spark.history.kerberos.enabled true
 # 需更改
 spark.history.kerberos.principal                      hadoop/admin@HADOOP.HZ.NETEASE.COM
@@ -64,9 +111,7 @@ spark.history.store.maxDiskUsage   20g
 
 然后关掉现有的spark history server，然后启动该新版history server。
 
-## Ambari 部署
-
-解压安装包。
+### Ambari 部署
 
 在ambari页面的 spark2配置页面的configs页面如下：
 
@@ -97,6 +142,9 @@ spark.history.store.maxDiskUsage   20g
 
 读写权限同用户`spark`，因此在创建spark.history.store.path 之后，需要使用  ` chown -R spark /usr/ndp/data/spark/historyStore ` 赋权。
 
-
-
 在配置好之后通过ambari重启spark相关组件。
+
+
+
+##  附加问题
+
