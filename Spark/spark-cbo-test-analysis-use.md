@@ -90,13 +90,17 @@ ANALYZE TABLE table_name COMPUTE STATISTICS
 ANALYZE TABLE table_name COMPUTE STATISTICS FOR COLUMNS column-name1, column-name2, ….
 ```
 
-本次实验，只对48张表统计了表的基本信息，未对列信息进行详细统计。共花费时间20min。
+本次实验，对于CBO对照组，使用analyze table命令得到48张表所有列的统计信息。
 
-### 实验结果
+共花费时间59min。
+
+## 实验结果
 
 
 
+![image-20181013153506127](../imgs/spark-cbo/tpcds-result.png)
 
 
-### 结果分析
+
+## 结果分析
 
