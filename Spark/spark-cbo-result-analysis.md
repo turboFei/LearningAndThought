@@ -90,7 +90,17 @@ ANALYZE TABLE table_name COMPUTE STATISTICS FOR COLUMNS column-name1, column-nam
 
 ![image-20181013153506127](../imgs/spark-cbo/tpcds-result.png)
 
+结论：
+
 这些sql，不使用CBO花费42883s，使用CBO花费23241s，加上analyze table使用的3600s，大概27000s，整体提升37%。
+
+各个sql语句性能提升的百分比如下图:
+
+灰色和黑色代表CBO的性能相对下降，绿色代表性能有提升，红色代表性能提升巨大。
+
+可以看出大部分都是性能提升，只有几个sql出现了性能下降。
+
+![](../imgs/spark-cbo/color-dif.png)
 
 ### 结果分析
 
@@ -293,3 +303,6 @@ Time taken: 35.406 seconds, Fetched 1 row(s)
 这就关乎cbo开启之前和之后的Statistics准确度问题。
 
 在`spark cbo源码分析`里面讲过，如果没有开启CBO，如果join类型不是leftSemi或者leftAnti join，则将两表大小之乘积作为预估大小，且在整条plan tree的估计都是粗糙的，会放大误差，造成这里预估的值大于 阈值，从而采取了不合适的join方法。
+
+
+

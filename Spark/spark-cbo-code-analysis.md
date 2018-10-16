@@ -202,11 +202,13 @@ broadcastjoin可以避免shuffle，如果使用得当，可以提升程序的性
 
 上述的判断，很多是基于`spark.sql.autoBroadcastJoinThreshold`，因此在运行环境中，一定要结合集群环境设置合适的值。
 
-而且，在join中，也应该基于rowCount来判断join的种类。
+而且，在joinSelection中，也应该基于rowCount来判断join的种类。
 
 #### CostBasedJoinReorder
 
 这是一个使用plan的stats信息，来选择合适的join顺序的类。
+
+类`Optimizer`中有两个跟join 顺序有关的rule，一个是reoderJoin，另外一个是CostBasedJoinRecorder。reorderjoin是没有cbo也会触发的rule，这个不会使用统计的信息，只是负责将filter下推，这样最底层的join至少会有一个filter。如果这些join已经每个都有一条condition，那么这些plan就不会变化，因此reorder join不涉及基于代价的优化。
 
 首先看下对cost的定义。cost是有一个基数，是rowCount，然后一个sizeInBytes。
 
@@ -246,4 +248,49 @@ def betterThan(other: JoinPlan, conf: SQLConf): Boolean = {
 
 
 
-joinRecorder是使用一个动态规划来进行选择合适的join顺序。
+costBasedJoinReorder是使用一个动态规划来进行选择合适的join顺序。
+
+下面讲一个这个动态规划算法。
+
+> 假设有  a j b j c j d   a.k1=b.k1 and b.k2 = c.k2 and c.k3=d.k3
+>
+> 将会分为4层来进行：
+>
+> > level 0: p({A}), p({B}), p({C}), p({D})
+> > level 1: p({A, B}), p({B, C}), p({C, D})
+> > level 2: p({A, B, C}), p({B, C, D})
+> > level 3: p({A, B, C, D})
+>
+> 首先就是生成第0层，第0层的founfPlans={p{a},p{b},p{c},p{d}}.
+>
+> 如果设层级为level，那么每层的任务就是找到（level+1)个plan进行join最优的版本。
+>
+> 因此 k层和level-k层的所包含的表的个数之和，就是(k+1+level-k+1)=level+2，也就是说是level+1层所需要的foundPlan。
+>
+> 而我们在每次生成新的join之后，就判断他的itemSet是否已经存在，如果不存在就存储；如果存在，就取出其对应的plan，对比看是不是优于之前的plan（betterThan)，保存最优的。
+>
+> 这样。每个level里面保存的都是相应个数个多join最优的plan，最终也得到了最优的plan。
+>
+> 当然，在形成plan时有很多判断，比如在level1 里面，就不能形成p({A,C})。
+>
+> 因为不存在condition 使得A,C可以进行join。
+
+当然，在动态规划进行search的时候，有一个filter。
+
+**spark.sql.cbo.joinReorder.dp.star.filter**
+
+这是一个星型join过滤器，用来确保star schema 中的tables是被plan在一起。
+
+**spark.sql.cbo.joinReorder.dp.threshold**
+
+代表在dp进行costbasedReorder时，最多支持的表的数量。
+
+
+
+**spark.sql.cbo.starSchemaDetection  **
+
+这个参数是在reorderJoin中触发，而且只在
+
+`spark.sql.cbo.starSchemaDetection=true spark.sql.cbo.enabled=false`时才触发，很奇怪，这个参数以cbo命名，但是却在cbo.enable=false才触发。
+
+这个是用来观察是否存在starJoin。
