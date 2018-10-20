@@ -114,14 +114,16 @@ Caused by: org.apache.hadoop.hive.ql.metadata.HiveException: MetaException(messa
 ### 转换一下这里的判断逻辑
 
 ```
-if(指定库名 &&  runSQlOnFile && 不是临时表 &&  判断可以runSqlOnFile(表的名字-路径来判断)){
+...
+if(指定库名 &&  runSQlOnFile && 不是临时表 && isSqlOnFile ){
 u  //后续处理，ResolveDataSource
 }
+...
+
+def isSqlOnFile(UnresolvedRelation):Boolean=>{
+判断table name是否是一个路径类型。。//
+db_name 是否是 一个格式类型，such as parquet
+    
+}
 ```
-
-
-
-如果这里不判断dbexist和tabexist
-
-后面会出问题么？
 
