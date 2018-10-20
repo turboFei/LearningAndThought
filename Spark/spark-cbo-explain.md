@@ -198,63 +198,101 @@ Time taken: 35.406 seconds, Fetched 1 row(s)
 
 
 
-**query25**
+**query50**
+
+优化之前：
+
+```scala
+== Physical Plan ==
+TakeOrderedAndProject(limit=100, orderBy=[s_store_name#55 ASC NULLS FIRST,s_company_id#66 ASC NULLS FIRST,s_street_number#68 ASC NULLS FIRST,s_street_name#69 ASC NULLS FIRST,s_street_type#70 ASC NULLS FIRST,s_suite_number#71 ASC NULLS FIRST,s_city#72 ASC NULLS FIRST,s_county#73 ASC NULLS FIRST,s_state#74 ASC NULLS FIRST,s_zip#75 ASC NULLS FIRST], output=[s_store_name#55,s_company_id#66,s_street_number#68,s_street_name#69,s_street_type#70,s_suite_number#71,s_city#72,s_county#73,s_state#74,s_zip#75,30days#0L,3160days#1L,6190days#2L,91120days#3L,dy120days#4L])
++- *(18) HashAggregate(keys=[s_store_name#55, s_company_id#66, s_street_number#68, s_street_name#69, s_street_type#70, s_suite_number#71, s_city#72, s_county#73, s_state#74, s_zip#75], functions=[sum(cast(CASE WHEN ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 30) THEN 1 ELSE 0 END as bigint)), sum(cast(CASE WHEN (((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 30) && ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 60)) THEN 1 ELSE 0 END as bigint)), sum(cast(CASE WHEN (((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 60) && ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 90)) THEN 1 ELSE 0 END as bigint)), sum(cast(CASE WHEN (((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 90) && ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 120)) THEN 1 ELSE 0 END as bigint)), sum(cast(CASE WHEN ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 120) THEN 1 ELSE 0 END as bigint))])
+   +- Exchange hashpartitioning(s_store_name#55, s_company_id#66, s_street_number#68, s_street_name#69, s_street_type#70, s_suite_number#71, s_city#72, s_county#73, s_state#74, s_zip#75, 1024)
+      +- *(17) HashAggregate(keys=[s_store_name#55, s_company_id#66, s_street_number#68, s_street_name#69, s_street_type#70, s_suite_number#71, s_city#72, s_county#73, s_state#74, s_zip#75], functions=[partial_sum(cast(CASE WHEN ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 30) THEN 1 ELSE 0 END as bigint)), partial_sum(cast(CASE WHEN (((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 30) && ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 60)) THEN 1 ELSE 0 END as bigint)), partial_sum(cast(CASE WHEN (((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 60) && ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 90)) THEN 1 ELSE 0 END as bigint)), partial_sum(cast(CASE WHEN (((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 90) && ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 120)) THEN 1 ELSE 0 END as bigint)), partial_sum(cast(CASE WHEN ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 120) THEN 1 ELSE 0 END as bigint))])
+         +- *(17) Project [ss_sold_date_sk#29L, sr_returned_date_sk#49L, s_store_name#55, s_company_id#66, s_street_number#68, s_street_name#69, s_street_type#70, s_suite_number#71, s_city#72, s_county#73, s_state#74, s_zip#75]
+            +- *(17) SortMergeJoin [sr_returned_date_sk#49L], [d_date_sk#107L], Inner
+               :- *(14) Sort [sr_returned_date_sk#49L ASC NULLS FIRST], false, 0
+               :  +- Exchange hashpartitioning(sr_returned_date_sk#49L, 1024)
+               :     +- *(13) Project [ss_sold_date_sk#29L, sr_returned_date_sk#49L, s_store_name#55, s_company_id#66, s_street_number#68, s_street_name#69, s_street_type#70, s_suite_number#71, s_city#72, s_county#73, s_state#74, s_zip#75]
+               :        +- *(13) SortMergeJoin [ss_sold_date_sk#29L], [d_date_sk#79L], Inner
+               :           :- *(10) Sort [ss_sold_date_sk#29L ASC NULLS FIRST], false, 0
+               :           :  +- Exchange hashpartitioning(ss_sold_date_sk#29L, 1024)
+               :           :     +- *(9) Project [ss_sold_date_sk#29L, sr_returned_date_sk#49L, s_store_name#55, s_company_id#66, s_street_number#68, s_street_name#69, s_street_type#70, s_suite_number#71, s_city#72, s_county#73, s_state#74, s_zip#75]
+               :           :        +- *(9) SortMergeJoin [ss_store_sk#13L], [s_store_sk#50L], Inner
+               :           :           :- *(6) Sort [ss_store_sk#13L ASC NULLS FIRST], false, 0
+               :           :           :  +- Exchange hashpartitioning(ss_store_sk#13L, 1024)
+               :           :           :     +- *(5) Project [ss_store_sk#13L, ss_sold_date_sk#29L, sr_returned_date_sk#49L]
+               :           :           :        +- *(5) SortMergeJoin [ss_ticket_number#15L, ss_item_sk#8L, ss_customer_sk#9L], [sr_ticket_number#38L, sr_item_sk#31L, sr_customer_sk#32L], Inner
+               :           :           :           :- *(2) Sort [ss_ticket_number#15L ASC NULLS FIRST, ss_item_sk#8L ASC NULLS FIRST, ss_customer_sk#9L ASC NULLS FIRST], false, 0
+               :           :           :           :  +- Exchange hashpartitioning(ss_ticket_number#15L, ss_item_sk#8L, ss_customer_sk#9L, 1024)
+               :           :           :           :     +- *(1) Project [ss_item_sk#8L, ss_customer_sk#9L, ss_store_sk#13L, ss_ticket_number#15L, ss_sold_date_sk#29L]
+               :           :           :           :        +- *(1) Filter (((isnotnull(ss_ticket_number#15L) && isnotnull(ss_customer_sk#9L)) && isnotnull(ss_item_sk#8L)) && isnotnull(ss_store_sk#13L))
+               :           :           :           :           +- *(1) FileScan parquet tpcds_wangfei_100g.store_sales[ss_item_sk#8L,ss_customer_sk#9L,ss_store_sk#13L,ss_ticket_number#15L,ss_sold_date_sk#29L] Batched: true, Format: Parquet, Location: PrunedInMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/store_sales/ss_sold_date_..., PartitionCount: 1823, PartitionFilters: [isnotnull(ss_sold_date_sk#29L)], PushedFilters: [IsNotNull(ss_ticket_number), IsNotNull(ss_customer_sk), IsNotNull(ss_item_sk), IsNotNull(ss_stor..., ReadSchema: struct<ss_item_sk:bigint,ss_customer_sk:bigint,ss_store_sk:bigint,ss_ticket_number:bigint>
+               :           :           :           +- *(4) Sort [sr_ticket_number#38L ASC NULLS FIRST, sr_item_sk#31L ASC NULLS FIRST, sr_customer_sk#32L ASC NULLS FIRST], false, 0
+               :           :           :              +- Exchange hashpartitioning(sr_ticket_number#38L, sr_item_sk#31L, sr_customer_sk#32L, 1024)
+               :           :           :                 +- *(3) Project [sr_item_sk#31L, sr_customer_sk#32L, sr_ticket_number#38L, sr_returned_date_sk#49L]
+               :           :           :                    +- *(3) Filter ((isnotnull(sr_item_sk#31L) && isnotnull(sr_customer_sk#32L)) && isnotnull(sr_ticket_number#38L))
+               :           :           :                       +- *(3) FileScan parquet tpcds_wangfei_100g.store_returns[sr_item_sk#31L,sr_customer_sk#32L,sr_ticket_number#38L,sr_returned_date_sk#49L] Batched: true, Format: Parquet, Location: PrunedInMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/store_returns/sr_returned..., PartitionCount: 2003, PartitionFilters: [isnotnull(sr_returned_date_sk#49L)], PushedFilters: [IsNotNull(sr_item_sk), IsNotNull(sr_customer_sk), IsNotNull(sr_ticket_number)], ReadSchema: struct<sr_item_sk:bigint,sr_customer_sk:bigint,sr_ticket_number:bigint>
+               :           :           +- *(8) Sort [s_store_sk#50L ASC NULLS FIRST], false, 0
+               :           :              +- Exchange hashpartitioning(s_store_sk#50L, 1024)
+               :           :                 +- *(7) Project [s_store_sk#50L, s_store_name#55, s_company_id#66, s_street_number#68, s_street_name#69, s_street_type#70, s_suite_number#71, s_city#72, s_county#73, s_state#74, s_zip#75]
+               :           :                    +- *(7) Filter isnotnull(s_store_sk#50L)
+               :           :                       +- *(7) FileScan parquet tpcds_wangfei_100g.store[s_store_sk#50L,s_store_name#55,s_company_id#66,s_street_number#68,s_street_name#69,s_street_type#70,s_suite_number#71,s_city#72,s_county#73,s_state#74,s_zip#75] Batched: true, Format: Parquet, Location: InMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/store], PartitionFilters: [], PushedFilters: [IsNotNull(s_store_sk)], ReadSchema: struct<s_store_sk:bigint,s_store_name:string,s_company_id:int,s_street_number:string,s_street_nam...
+               :           +- *(12) Sort [d_date_sk#79L ASC NULLS FIRST], false, 0
+               :              +- Exchange hashpartitioning(d_date_sk#79L, 1024)
+               :                 +- *(11) Project [d_date_sk#79L]
+               :                    +- *(11) Filter isnotnull(d_date_sk#79L)
+               :                       +- *(11) FileScan parquet tpcds_wangfei_100g.date_dim[d_date_sk#79L] Batched: true, Format: Parquet, Location: InMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/date_dim], PartitionFilters: [], PushedFilters: [IsNotNull(d_date_sk)], ReadSchema: struct<d_date_sk:bigint>
+               +- *(16) Sort [d_date_sk#107L ASC NULLS FIRST], false, 0
+                  +- Exchange hashpartitioning(d_date_sk#107L, 1024)
+                     +- *(15) Project [d_date_sk#107L]
+                        +- *(15) Filter ((((isnotnull(d_year#113L) && isnotnull(d_moy#115L)) && (d_year#113L = 2000)) && (d_moy#115L = 9)) && isnotnull(d_date_sk#107L))
+                           +- *(15) FileScan parquet tpcds_wangfei_100g.date_dim[d_date_sk#107L,d_year#113L,d_moy#115L] Batched: true, Format: Parquet, Location: InMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/date_dim], PartitionFilters: [], PushedFilters: [IsNotNull(d_year), IsNotNull(d_moy), EqualTo(d_year,2000), EqualTo(d_moy,9), IsNotNull(d_date_sk)], ReadSchema: struct<d_date_sk:bigint,d_year:bigint,d_moy:bigint>
+Time taken: 33.931 seconds, Fetched 1 row(s)
+
+```
+
+
 
 优化之后:
 
-```
+```scala
 == Physical Plan ==
-TakeOrderedAndProject(limit=100, orderBy=[i_item_id#196 ASC NULLS FIRST,i_item_desc#199 ASC NULLS FIRST,s_store_id#167 ASC NULLS FIRST,s_store_name#171 ASC NULLS FIRST], output=[i_item_id#196,i_item_desc#199,s_store_id#167,s_store_name#171,store_sales_profit#0,store_returns_loss#1,catalog_sales_profit#2])
-+- *(15) HashAggregate(keys=[i_item_id#196, i_item_desc#199, s_store_id#167, s_store_name#171], functions=[sum(UnscaledValue(ss_net_profit#26)), sum(UnscaledValue(sr_net_loss#46)), sum(UnscaledValue(cs_net_profit#80))])
-   +- Exchange hashpartitioning(i_item_id#196, i_item_desc#199, s_store_id#167, s_store_name#171, 1024)
-      +- *(14) HashAggregate(keys=[i_item_id#196, i_item_desc#199, s_store_id#167, s_store_name#171], functions=[partial_sum(UnscaledValue(ss_net_profit#26)), partial_sum(UnscaledValue(sr_net_loss#46)), partial_sum(UnscaledValue(cs_net_profit#80))])
-         +- *(14) Project [ss_net_profit#26, sr_net_loss#46, cs_net_profit#80, s_store_id#167, s_store_name#171, i_item_id#196, i_item_desc#199]
-            +- *(14) SortMergeJoin [sr_customer_sk#30L, sr_item_sk#29L], [cs_bill_customer_sk#50L, cs_item_sk#62L], Inner
-               :- *(10) Sort [sr_customer_sk#30L ASC NULLS FIRST, sr_item_sk#29L ASC NULLS FIRST], false, 0
-               :  +- Exchange hashpartitioning(sr_customer_sk#30L, sr_item_sk#29L, 1024)
-               :     +- *(9) Project [ss_net_profit#26, s_store_id#167, s_store_name#171, i_item_id#196, i_item_desc#199, sr_item_sk#29L, sr_customer_sk#30L, sr_net_loss#46]
-               :        +- *(9) SortMergeJoin [ss_item_sk#6L, ss_customer_sk#7L, ss_ticket_number#13L], [sr_item_sk#29L, sr_customer_sk#30L, sr_ticket_number#36L], Inner
-               :           :- *(5) Sort [ss_item_sk#6L ASC NULLS FIRST, ss_customer_sk#7L ASC NULLS FIRST, ss_ticket_number#13L ASC NULLS FIRST], false, 0
-               :           :  +- Exchange hashpartitioning(ss_item_sk#6L, ss_customer_sk#7L, ss_ticket_number#13L, 1024)
-               :           :     +- *(4) Project [ss_item_sk#6L, ss_customer_sk#7L, ss_ticket_number#13L, ss_net_profit#26, s_store_id#167, s_store_name#171, i_item_id#196, i_item_desc#199]
-               :           :        +- *(4) BroadcastHashJoin [ss_item_sk#6L], [i_item_sk#195L], Inner, BuildRight
-               :           :           :- *(4) Project [ss_item_sk#6L, ss_customer_sk#7L, ss_ticket_number#13L, ss_net_profit#26, s_store_id#167, s_store_name#171]
-               :           :           :  +- *(4) BroadcastHashJoin [ss_store_sk#11L], [s_store_sk#166L], Inner, BuildRight
-               :           :           :     :- *(4) Project [ss_item_sk#6L, ss_customer_sk#7L, ss_store_sk#11L, ss_ticket_number#13L, ss_net_profit#26]
-               :           :           :     :  +- *(4) BroadcastHashJoin [ss_sold_date_sk#27L], [d_date_sk#82L], Inner, BuildRight
-               :           :           :     :     :- *(4) Project [ss_item_sk#6L, ss_customer_sk#7L, ss_store_sk#11L, ss_ticket_number#13L, ss_net_profit#26, ss_sold_date_sk#27L]
-               :           :           :     :     :  +- *(4) Filter (((isnotnull(ss_ticket_number#13L) && isnotnull(ss_item_sk#6L)) && isnotnull(ss_customer_sk#7L)) && isnotnull(ss_store_sk#11L))
-               :           :           :     :     :     +- *(4) FileScan parquet tpcds_wangfei_100g.store_sales[ss_item_sk#6L,ss_customer_sk#7L,ss_store_sk#11L,ss_ticket_number#13L,ss_net_profit#26,ss_sold_date_sk#27L] Batched: true, Format: Parquet, Location: PrunedInMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/store_sales/ss_sold_date_..., PartitionCount: 1823, PartitionFilters: [isnotnull(ss_sold_date_sk#27L)], PushedFilters: [IsNotNull(ss_ticket_number), IsNotNull(ss_item_sk), IsNotNull(ss_customer_sk), IsNotNull(ss_stor..., ReadSchema: struct<ss_item_sk:bigint,ss_customer_sk:bigint,ss_store_sk:bigint,ss_ticket_number:bigint,ss_net_...
-               :           :           :     :     +- BroadcastExchange HashedRelationBroadcastMode(List(input[0, bigint, true]))
-               :           :           :     :        +- *(1) Project [d_date_sk#82L]
-               :           :           :     :           +- *(1) Filter ((((isnotnull(d_moy#90L) && isnotnull(d_year#88L)) && (d_moy#90L = 4)) && (d_year#88L = 2000)) && isnotnull(d_date_sk#82L))
-               :           :           :     :              +- *(1) FileScan parquet tpcds_wangfei_100g.date_dim[d_date_sk#82L,d_year#88L,d_moy#90L] Batched: true, Format: Parquet, Location: InMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/date_dim], PartitionFilters: [], PushedFilters: [IsNotNull(d_moy), IsNotNull(d_year), EqualTo(d_moy,4), EqualTo(d_year,2000), IsNotNull(d_date_sk)], ReadSchema: struct<d_date_sk:bigint,d_year:bigint,d_moy:bigint>
-               :           :           :     +- BroadcastExchange HashedRelationBroadcastMode(List(input[0, bigint, true]))
-               :           :           :        +- *(2) Project [s_store_sk#166L, s_store_id#167, s_store_name#171]
-               :           :           :           +- *(2) Filter isnotnull(s_store_sk#166L)
-               :           :           :              +- *(2) FileScan parquet tpcds_wangfei_100g.store[s_store_sk#166L,s_store_id#167,s_store_name#171] Batched: true, Format: Parquet, Location: InMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/store], PartitionFilters: [], PushedFilters: [IsNotNull(s_store_sk)], ReadSchema: struct<s_store_sk:bigint,s_store_id:string,s_store_name:string>
-               :           :           +- BroadcastExchange HashedRelationBroadcastMode(List(input[0, bigint, true]))
-               :           :              +- *(3) Project [i_item_sk#195L, i_item_id#196, i_item_desc#199]
-               :           :                 +- *(3) Filter isnotnull(i_item_sk#195L)
-               :           :                    +- *(3) FileScan parquet tpcds_wangfei_100g.item[i_item_sk#195L,i_item_id#196,i_item_desc#199] Batched: true, Format: Parquet, Location: InMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/item], PartitionFilters: [], PushedFilters: [IsNotNull(i_item_sk)], ReadSchema: struct<i_item_sk:bigint,i_item_id:string,i_item_desc:string>
-               :           +- *(8) Sort [sr_item_sk#29L ASC NULLS FIRST, sr_customer_sk#30L ASC NULLS FIRST, sr_ticket_number#36L ASC NULLS FIRST], false, 0
-               :              +- Exchange hashpartitioning(sr_item_sk#29L, sr_customer_sk#30L, sr_ticket_number#36L, 1024)
-               :                 +- *(7) Project [sr_item_sk#29L, sr_customer_sk#30L, sr_ticket_number#36L, sr_net_loss#46]
-               :                    +- *(7) BroadcastHashJoin [d_date_sk#110L], [sr_returned_date_sk#47L], Inner, BuildLeft
-               :                       :- BroadcastExchange HashedRelationBroadcastMode(List(input[0, bigint, true]))
-               :                       :  +- *(6) Project [d_date_sk#110L]
-               :                       :     +- *(6) Filter (((((isnotnull(d_year#116L) && isnotnull(d_moy#118L)) && (d_moy#118L >= 4)) && (d_moy#118L <= 10)) && (d_year#116L = 2000)) && isnotnull(d_date_sk#110L))
-               :                       :        +- *(6) FileScan parquet tpcds_wangfei_100g.date_dim[d_date_sk#110L,d_year#116L,d_moy#118L] Batched: true, Format: Parquet, Location: InMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/date_dim], PartitionFilters: [], PushedFilters: [IsNotNull(d_year), IsNotNull(d_moy), GreaterThanOrEqual(d_moy,4), LessThanOrEqual(d_moy,10), Equ..., ReadSchema: struct<d_date_sk:bigint,d_year:bigint,d_moy:bigint>
-               :                       +- *(7) Project [sr_item_sk#29L, sr_customer_sk#30L, sr_ticket_number#36L, sr_net_loss#46, sr_returned_date_sk#47L]
-               :                          +- *(7) Filter ((isnotnull(sr_ticket_number#36L) && isnotnull(sr_customer_sk#30L)) && isnotnull(sr_item_sk#29L))
-               :                             +- *(7) FileScan parquet tpcds_wangfei_100g.store_returns[sr_item_sk#29L,sr_customer_sk#30L,sr_ticket_number#36L,sr_net_loss#46,sr_returned_date_sk#47L] Batched: true, Format: Parquet, Location: PrunedInMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/store_returns/sr_returned..., PartitionCount: 2003, PartitionFilters: [isnotnull(sr_returned_date_sk#47L)], PushedFilters: [IsNotNull(sr_ticket_number), IsNotNull(sr_customer_sk), IsNotNull(sr_item_sk)], ReadSchema: struct<sr_item_sk:bigint,sr_customer_sk:bigint,sr_ticket_number:bigint,sr_net_loss:decimal(7,2)>
-               +- *(13) Sort [cs_bill_customer_sk#50L ASC NULLS FIRST, cs_item_sk#62L ASC NULLS FIRST], false, 0
-                  +- Exchange hashpartitioning(cs_bill_customer_sk#50L, cs_item_sk#62L, 1024)
-                     +- *(12) Project [cs_bill_customer_sk#50L, cs_item_sk#62L, cs_net_profit#80]
-                        +- *(12) BroadcastHashJoin [cs_sold_date_sk#81L], [d_date_sk#138L], Inner, BuildRight
-                           :- *(12) Project [cs_bill_customer_sk#50L, cs_item_sk#62L, cs_net_profit#80, cs_sold_date_sk#81L]
-                           :  +- *(12) Filter (isnotnull(cs_item_sk#62L) && isnotnull(cs_bill_customer_sk#50L))
-                           :     +- *(12) FileScan parquet tpcds_wangfei_100g.catalog_sales[cs_bill_customer_sk#50L,cs_item_sk#62L,cs_net_profit#80,cs_sold_date_sk#81L] Batched: true, Format: Parquet, Location: PrunedInMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/catalog_sales/cs_sold_dat..., PartitionCount: 1836, PartitionFilters: [isnotnull(cs_sold_date_sk#81L)], PushedFilters: [IsNotNull(cs_item_sk), IsNotNull(cs_bill_customer_sk)], ReadSchema: struct<cs_bill_customer_sk:bigint,cs_item_sk:bigint,cs_net_profit:decimal(7,2)>
-                           +- ReusedExchange [d_date_sk#138L], BroadcastExchange HashedRelationBroadcastMode(List(input[0, bigint, true]))
-Time taken: 40.836 seconds, Fetched 1 row(s)
+TakeOrderedAndProject(limit=100, orderBy=[s_store_name#55 ASC NULLS FIRST,s_company_id#66 ASC NULLS FIRST,s_street_number#68 ASC NULLS FIRST,s_street_name#69 ASC NULLS FIRST,s_street_type#70 ASC NULLS FIRST,s_suite_number#71 ASC NULLS FIRST,s_city#72 ASC NULLS FIRST,s_county#73 ASC NULLS FIRST,s_state#74 ASC NULLS FIRST,s_zip#75 ASC NULLS FIRST], output=[s_store_name#55,s_company_id#66,s_street_number#68,s_street_name#69,s_street_type#70,s_suite_number#71,s_city#72,s_county#73,s_state#74,s_zip#75,30days#0L,3160days#1L,6190days#2L,91120days#3L,dy120days#4L])
++- *(9) HashAggregate(keys=[s_store_name#55, s_company_id#66, s_street_number#68, s_street_name#69, s_street_type#70, s_suite_number#71, s_city#72, s_county#73, s_state#74, s_zip#75], functions=[sum(cast(CASE WHEN ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 30) THEN 1 ELSE 0 END as bigint)), sum(cast(CASE WHEN (((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 30) && ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 60)) THEN 1 ELSE 0 END as bigint)), sum(cast(CASE WHEN (((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 60) && ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 90)) THEN 1 ELSE 0 END as bigint)), sum(cast(CASE WHEN (((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 90) && ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 120)) THEN 1 ELSE 0 END as bigint)), sum(cast(CASE WHEN ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 120) THEN 1 ELSE 0 END as bigint))])
+   +- Exchange hashpartitioning(s_store_name#55, s_company_id#66, s_street_number#68, s_street_name#69, s_street_type#70, s_suite_number#71, s_city#72, s_county#73, s_state#74, s_zip#75, 1024)
+      +- *(8) HashAggregate(keys=[s_store_name#55, s_company_id#66, s_street_number#68, s_street_name#69, s_street_type#70, s_suite_number#71, s_city#72, s_county#73, s_state#74, s_zip#75], functions=[partial_sum(cast(CASE WHEN ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 30) THEN 1 ELSE 0 END as bigint)), partial_sum(cast(CASE WHEN (((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 30) && ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 60)) THEN 1 ELSE 0 END as bigint)), partial_sum(cast(CASE WHEN (((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 60) && ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 90)) THEN 1 ELSE 0 END as bigint)), partial_sum(cast(CASE WHEN (((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 90) && ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) <= 120)) THEN 1 ELSE 0 END as bigint)), partial_sum(cast(CASE WHEN ((sr_returned_date_sk#49L - ss_sold_date_sk#29L) > 120) THEN 1 ELSE 0 END as bigint))])
+         +- *(8) Project [ss_sold_date_sk#29L, sr_returned_date_sk#49L, s_store_name#55, s_company_id#66, s_street_number#68, s_street_name#69, s_street_type#70, s_suite_number#71, s_city#72, s_county#73, s_state#74, s_zip#75]
+            +- *(8) SortMergeJoin [ss_customer_sk#9L, ss_ticket_number#15L, ss_item_sk#8L], [sr_customer_sk#32L, sr_ticket_number#38L, sr_item_sk#31L], Inner
+               :- *(4) Sort [ss_customer_sk#9L ASC NULLS FIRST, ss_ticket_number#15L ASC NULLS FIRST, ss_item_sk#8L ASC NULLS FIRST], false, 0
+               :  +- Exchange hashpartitioning(ss_customer_sk#9L, ss_ticket_number#15L, ss_item_sk#8L, 1024)
+               :     +- *(3) Project [ss_item_sk#8L, ss_customer_sk#9L, ss_ticket_number#15L, ss_sold_date_sk#29L, s_store_name#55, s_company_id#66, s_street_number#68, s_street_name#69, s_street_type#70, s_suite_number#71, s_city#72, s_county#73, s_state#74, s_zip#75]
+               :        +- *(3) BroadcastHashJoin [ss_store_sk#13L], [s_store_sk#50L], Inner, BuildRight
+               :           :- *(3) Project [ss_item_sk#8L, ss_customer_sk#9L, ss_store_sk#13L, ss_ticket_number#15L, ss_sold_date_sk#29L]
+               :           :  +- *(3) BroadcastHashJoin [ss_sold_date_sk#29L], [d_date_sk#79L], Inner, BuildRight
+               :           :     :- *(3) Project [ss_item_sk#8L, ss_customer_sk#9L, ss_store_sk#13L, ss_ticket_number#15L, ss_sold_date_sk#29L]
+               :           :     :  +- *(3) Filter (((isnotnull(ss_item_sk#8L) && isnotnull(ss_customer_sk#9L)) && isnotnull(ss_ticket_number#15L)) && isnotnull(ss_store_sk#13L))
+               :           :     :     +- *(3) FileScan parquet tpcds_wangfei_100g.store_sales[ss_item_sk#8L,ss_customer_sk#9L,ss_store_sk#13L,ss_ticket_number#15L,ss_sold_date_sk#29L] Batched: true, Format: Parquet, Location: PrunedInMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/store_sales/ss_sold_date_..., PartitionCount: 1823, PartitionFilters: [isnotnull(ss_sold_date_sk#29L)], PushedFilters: [IsNotNull(ss_item_sk), IsNotNull(ss_customer_sk), IsNotNull(ss_ticket_number), IsNotNull(ss_stor..., ReadSchema: struct<ss_item_sk:bigint,ss_customer_sk:bigint,ss_store_sk:bigint,ss_ticket_number:bigint>
+               :           :     +- BroadcastExchange HashedRelationBroadcastMode(List(input[0, bigint, true]))
+               :           :        +- *(1) Project [d_date_sk#79L]
+               :           :           +- *(1) Filter isnotnull(d_date_sk#79L)
+               :           :              +- *(1) FileScan parquet tpcds_wangfei_100g.date_dim[d_date_sk#79L] Batched: true, Format: Parquet, Location: InMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/date_dim], PartitionFilters: [], PushedFilters: [IsNotNull(d_date_sk)], ReadSchema: struct<d_date_sk:bigint>
+               :           +- BroadcastExchange HashedRelationBroadcastMode(List(input[0, bigint, true]))
+               :              +- *(2) Project [s_store_sk#50L, s_store_name#55, s_company_id#66, s_street_number#68, s_street_name#69, s_street_type#70, s_suite_number#71, s_city#72, s_county#73, s_state#74, s_zip#75]
+               :                 +- *(2) Filter isnotnull(s_store_sk#50L)
+               :                    +- *(2) FileScan parquet tpcds_wangfei_100g.store[s_store_sk#50L,s_store_name#55,s_company_id#66,s_street_number#68,s_street_name#69,s_street_type#70,s_suite_number#71,s_city#72,s_county#73,s_state#74,s_zip#75] Batched: true, Format: Parquet, Location: InMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/store], PartitionFilters: [], PushedFilters: [IsNotNull(s_store_sk)], ReadSchema: struct<s_store_sk:bigint,s_store_name:string,s_company_id:int,s_street_number:string,s_street_nam...
+               +- *(7) Sort [sr_customer_sk#32L ASC NULLS FIRST, sr_ticket_number#38L ASC NULLS FIRST, sr_item_sk#31L ASC NULLS FIRST], false, 0
+                  +- Exchange hashpartitioning(sr_customer_sk#32L, sr_ticket_number#38L, sr_item_sk#31L, 1024)
+                     +- *(6) Project [sr_item_sk#31L, sr_customer_sk#32L, sr_ticket_number#38L, sr_returned_date_sk#49L]
+                        +- *(6) BroadcastHashJoin [d_date_sk#107L], [sr_returned_date_sk#49L], Inner, BuildLeft
+                           :- BroadcastExchange HashedRelationBroadcastMode(List(input[0, bigint, true]))
+                           :  +- *(5) Project [d_date_sk#107L]
+                           :     +- *(5) Filter ((((isnotnull(d_year#113L) && isnotnull(d_moy#115L)) && (d_year#113L = 2000)) && (d_moy#115L = 9)) && isnotnull(d_date_sk#107L))
+                           :        +- *(5) FileScan parquet tpcds_wangfei_100g.date_dim[d_date_sk#107L,d_year#113L,d_moy#115L] Batched: true, Format: Parquet, Location: InMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/date_dim], PartitionFilters: [], PushedFilters: [IsNotNull(d_year), IsNotNull(d_moy), EqualTo(d_year,2000), EqualTo(d_moy,9), IsNotNull(d_date_sk)], ReadSchema: struct<d_date_sk:bigint,d_year:bigint,d_moy:bigint>
+                           +- *(6) Project [sr_item_sk#31L, sr_customer_sk#32L, sr_ticket_number#38L, sr_returned_date_sk#49L]
+                              +- *(6) Filter ((isnotnull(sr_item_sk#31L) && isnotnull(sr_customer_sk#32L)) && isnotnull(sr_ticket_number#38L))
+                                 +- *(6) FileScan parquet tpcds_wangfei_100g.store_returns[sr_item_sk#31L,sr_customer_sk#32L,sr_ticket_number#38L,sr_returned_date_sk#49L] Batched: true, Format: Parquet, Location: PrunedInMemoryFileIndex[hdfs://dev/user/warehouse/tpcds_wangfei_100g.db/store_returns/sr_returned..., PartitionCount: 2003, PartitionFilters: [isnotnull(sr_returned_date_sk#49L)], PushedFilters: [IsNotNull(sr_item_sk), IsNotNull(sr_customer_sk), IsNotNull(sr_ticket_number)], ReadSchema: struct<sr_item_sk:bigint,sr_customer_sk:bigint,sr_ticket_number:bigint>
+Time taken: 31.264 seconds, Fetched 1 row(s)
+
+
+
 ```

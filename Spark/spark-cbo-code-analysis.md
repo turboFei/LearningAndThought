@@ -154,55 +154,17 @@ def estimate: Option[Statistics] = {
 
 ## 拿到数据之后怎么用
 
-这些Statistics的结果，会怎么运用到LogicalPlan的优化中？
+这些Statistics的结果，会怎么运用呢？
 
-#### JoinSelection
+spark sql中plan的处理过程可以参考[Spark sql catalyst过程详解](./spark-sql-catalyst.md).
 
-在SparkPlanner类中，有几个优化策略会对LogicalPlan进行优化。
+在unresolvedLogicalPlan->resolvedLogicalPlan过程中收集Statistics，然后在
 
-```scala
-class SparkPlanner(
-    val sparkContext: SparkContext,
-    val conf: SQLConf,
-    val experimentalMethods: ExperimentalMethods)
-  extends SparkStrategies {
-	...
-  override def strategies: Seq[Strategy] =
-    experimentalMethods.extraStrategies ++
-      extraPlanningStrategies ++ (
-      DataSourceV2Strategy ::
-      FileSourceStrategy ::
-      DataSourceStrategy(conf) ::
-      SpecialLimits ::
-      Aggregation ::
-      JoinSelection ::
-      InMemoryScans ::
-      BasicOperators :: Nil)
-      ...
-  }
-```
+resolvedLogicalPlan->optimizedLogicalPlan过程中，基于这些统计信息，进行costBasedJoinRecorder，即基于统计信息，对join顺序重排序，寻求最优join方案。
 
-里面有一个JoinSelection方法，这个方法是主要是用来判断是否可以使用broadcastjoin，然后决定是使用broadcastJoin，还是shuffledHashJoin还是sortMergeJoin。
-
-broadcastjoin可以避免shuffle，如果使用得当，可以提升程序的性能。`这是针对一个大表和一个极小表`在spark中有一个参数是，`spark.sql.autoBroadcastJoinThreshold`，这个参数是一个数字，单位字节，代表如果一个表的szie小于这个数值，就可以进行broadcastjoin。但是这里只使用size作为估计是不准确的，还应该使用rowCount作为参考，因为在join中，join的结果是与两个表的条数强相关，只使用size做判断是不准确的。
-
-在spark中，有BroadCastHint，前面也提到过，如果没有开启cbo，那么如果判断join类型是非leftAntiJoin和leftSemiJoin，则会觉得join之后的大小无法估测，可能会爆炸式增长，因此会关掉BroadcastHint。
-
-对于shuffledHashJoin，`这是针对一个大表和一个小表（判断标准为a.stats.sizeInBytes * 3 <= b.stats.sizeInBytes)`，简单描述一下过程就是两个表A和B，首先，选择一个表进行shuffle write操作，即针对每个分区，按照key的hash值进行排序，将相同hash值的key放在一起，形成一个partitionFile，然后在read端拉取write端所有相应key的数据，作为localhashMap和另外一个标的分区进行join。
-
-这里也使用stats进行判断，如果`plan.stats.sizeInBytes < conf.autoBroadcastJoinThreshold * conf.numShufflePartitions`，则判断该表的size可以满足每个分区构建localhashMap的可能，可以看到这里也是以`autoBroadcastJoinThreshold`作为衡量标准。
-
-如果是两张大表，则需要使用sortmergeJoin，类似于先排序，即按照keypair排序，然后进行归并。
+在optimizedLogicalPlan->phsicalPlan过程中，基于Statistics中的sizeInBytes信息以及hint选择合适的join策略(broadcastJoin,hashShuffledJoin,sortMergeJoin).
 
 
-
-这些join selection的操作，不管是否开启CBO都会进行。但是和CBO相关的是，这些数据的统计是和CBO有关，前面提过，如果开启CBO则使用BasicStatsPlanVisitor来进行统计。
-
-上述的这些估测，都是基于size信息。但是即使是基于size信息，如果没有开启cbo，这些信息也是粗糙的，没有CBO那种更细致的估计，因此可能会造成Join种类选择不合适。
-
-上述的判断，很多是基于`spark.sql.autoBroadcastJoinThreshold`，因此在运行环境中，一定要结合集群环境设置合适的值。
-
-而且，在joinSelection中，也应该基于rowCount来判断join的种类。
 
 #### CostBasedJoinReorder
 
@@ -294,3 +256,53 @@ costBasedJoinReorder是使用一个动态规划来进行选择合适的join顺�
 `spark.sql.cbo.starSchemaDetection=true spark.sql.cbo.enabled=false`时才触发，很奇怪，这个参数以cbo命名，但是却在cbo.enable=false才触发。
 
 这个是用来观察是否存在starJoin。
+
+
+
+#### JoinSelection
+
+在SparkPlanner类中，有几个优化策略会对LogicalPlan进行优化。
+
+```scala
+class SparkPlanner(
+    val sparkContext: SparkContext,
+    val conf: SQLConf,
+    val experimentalMethods: ExperimentalMethods)
+  extends SparkStrategies {
+	...
+  override def strategies: Seq[Strategy] =
+    experimentalMethods.extraStrategies ++
+      extraPlanningStrategies ++ (
+      DataSourceV2Strategy ::
+      FileSourceStrategy ::
+      DataSourceStrategy(conf) ::
+      SpecialLimits ::
+      Aggregation ::
+      JoinSelection ::
+      InMemoryScans ::
+      BasicOperators :: Nil)
+      ...
+  }
+```
+
+里面有一个JoinSelection方法，这个方法是主要是用来判断是否可以使用broadcastjoin，然后决定是使用broadcastJoin，还是shuffledHashJoin还是sortMergeJoin。
+
+broadcastjoin可以避免shuffle，如果使用得当，可以提升程序的性能。`这是针对一个大表和一个极小表`在spark中有一个参数是，`spark.sql.autoBroadcastJoinThreshold`，这个参数是一个数字，单位字节，代表如果一个表的szie小于这个数值，就可以进行broadcastjoin。但是这里只使用size作为估计是不准确的，还应该使用rowCount作为参考，因为在join中，join的结果是与两个表的条数强相关，只使用size做判断是不准确的。
+
+在spark中，有BroadCastHint，前面也提到过，如果没有开启cbo，那么如果判断join类型是非leftAntiJoin和leftSemiJoin，则会觉得join之后的大小无法估测，可能会爆炸式增长，因此会关掉BroadcastHint。
+
+对于shuffledHashJoin，`这是针对一个大表和一个小表（判断标准为a.stats.sizeInBytes * 3 <= b.stats.sizeInBytes)`，简单描述一下过程就是两个表A和B，首先，选择一个表进行shuffle write操作，即针对每个分区，按照key的hash值进行排序，将相同hash值的key放在一起，形成一个partitionFile，然后在read端拉取write端所有相应key的数据，作为localhashMap和另外一个标的分区进行join。
+
+这里也使用stats进行判断，如果`plan.stats.sizeInBytes < conf.autoBroadcastJoinThreshold * conf.numShufflePartitions`，则判断该表的size可以满足每个分区构建localhashMap的可能，可以看到这里也是以`autoBroadcastJoinThreshold`作为衡量标准。
+
+如果是两张大表，则需要使用sortmergeJoin，类似于先排序，即按照keypair排序，然后进行归并。
+
+
+
+这些join selection的操作，不管是否开启CBO都会进行。但是和CBO相关的是，这些数据的统计是和CBO有关，前面提过，如果开启CBO则使用BasicStatsPlanVisitor来进行统计。
+
+上述的这些估测，都是基于size信息。但是即使是基于size信息，如果没有开启cbo，这些信息也是粗糙的，没有CBO那种更细致的估计，因此可能会造成Join种类选择不合适。
+
+上述的判断，很多是基于`spark.sql.autoBroadcastJoinThreshold`，因此在运行环境中，一定要结合集群环境设置合适的值。
+
+而且，在joinSelection中，也应该基于rowCount来判断join的种类。
