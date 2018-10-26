@@ -127,3 +127,53 @@ db_name 是否是 一个格式类型，such as parquet
 }
 ```
 
+
+
+## isRunSQLOnFile
+
+首先，这里判断确定是runSqlOnFile之后，就交给resolveDataSource类来resolve这个unresolvedRelation。
+
+```scala
+class ResolveDataSource(sparkSession: SparkSession) extends Rule[LogicalPlan] {
+  def apply(plan: LogicalPlan): LogicalPlan = plan resolveOperators {
+    case u: UnresolvedRelation if u.tableIdentifier.database.isDefined =>
+      try {
+        val dataSource = DataSource(
+          sparkSession,
+          paths = u.tableIdentifier.table :: Nil,
+          className = u.tableIdentifier.database.get)
+
+        val notSupportDirectQuery = try {
+          !classOf[FileFormat].isAssignableFrom(dataSource.providingClass)
+        } catch {
+          case NonFatal(e) => false
+        }
+        if (notSupportDirectQuery) {
+          throw new AnalysisException("Unsupported data source type for direct query on files: " +
+            s"${u.tableIdentifier.database.get}")
+        }
+        val plan = LogicalRelation(dataSource.resolveRelation())
+        u.alias.map(a => SubqueryAlias(u.alias.get, plan, None)).getOrElse(plan)
+      } catch {
+        case e: ClassNotFoundException => u
+        case e: Exception =>
+          // the provider is valid, but failed to create a logical plan
+          u.failAnalysis(e.getMessage)
+      }
+  }
+}
+```
+
+这个类很简单，就是通过dbname作为DataSource的class，然后tableName::Nil作为paths，构建一个DataSource。
+
+通过观察DataSource 类。
+
+```
+* @param paths A list of file system paths that hold data.  These will be globbed before and
+*              qualified. This option only works when reading from a [[FileFormat]].
+```
+
+这里，paths这个参数只有当DataSource从FileFormat读取时，才会生效，因此runSqlOnFile这里不会从jdbc读取数据，这就不用判断jdbc格式下的tablename问题。
+
+而在fileFormat下，path必定是以"/"开头，然后对支持的className(dbname)进行判定，甚至不用判定className，就能把这块逻辑放到resolveDataSource那里继续处理。
+

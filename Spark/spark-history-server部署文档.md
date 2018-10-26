@@ -80,7 +80,7 @@ export LD_LIBRARY_PATH=/usr/ndp/current/mapreduce_client/lib/native:/usr/ndp/cur
 
 需要额外添加的配置项为`spark.history.store.path` `spark.history.store.maxDiskUsage`  ,spark.history.store.path 需要手动创建目录，spark.history.store.maxDiskUsage 设为20g。
 
-其他所有配置都可从老版本history server中拷贝，然后`spark.history.fs.cleaner.maxAge`调大至15d，`spark.history.ui.maxApplications`调大至50000(后续如果spark每天的应用数更多，可以调至100000),另外`spark.history.fs.numReplayThreads`设置为6(重要，因为将`spark.history.ui.maxApplications`调大之后，第一次启动时会拉取大量的数据，目前集群上设置的线程数是20，线程过多会造成网卡超载，目前线上机器核数为24，建议设置为核数的25%，即6)。
+其他所有配置都可从老版本history server中拷贝，然后`spark.history.fs.cleaner.maxAge`调大至15d，`spark.history.ui.maxApplications`调大至50000(后续如果spark每天的应用数更多，可以调至100000),另外在第一次加载数据时将`spark.history.fs.numReplayThreads`设置为6(重要，因为将`spark.history.ui.maxApplications`调大之后，第一次启动时会拉取大量的数据，目前集群上设置的线程数是20，线程过多会造成网卡超载，目前线上机器核数为24，建议设置为核数的25%，即6)。
 
 参考如下：
 
@@ -100,9 +100,9 @@ spark.history.fs.numReplayThreads 6
 spark.history.fs.update.interval 60s
 spark.history.kerberos.enabled true
 # 需更改
-spark.history.kerberos.principal                      hadoop/admin@HADOOP.HZ.NETEASE.COM
+spark.history.kerberos.principal                      spark-dev@HADOOP.HZ.NETEASE.COM
 # 需更改
-spark.history.kerberos.keytab                         /home/hadoop/yarn/conf/hadoop.keytab
+spark.history.kerberos.keytab                         /home/hadoop/yarn/conf/spark2.headless.keytab
 spark.history.provider org.apache.spark.deploy.history.FsHistoryProvider
 spark.history.retainedApplications 50
 spark.history.ui.maxApplications 50000
@@ -111,10 +111,16 @@ spark.yarn.historyServer.address spark1.lt.163.org:18080
 spark.yarn.queue default
 # 必须设置
 spark.history.store.path     /home/hadoop/spark-2.3.2-bin-his-0.1/historyStore
-spark.history.store.maxDiskUsage   20g
+spark.history.store.maxDiskUsage   40g
 ```
 
-然后关掉现有的spark history server，然后启动该新版history server。
+
+
+然后先不连接线上yarn端口，等日志加载完毕之后，关闭spark-history-server。
+
+然后将`spark.history.fs.numReplayThreads`设置为20，这是为了满足线上需求。
+
+
 
 ### Ambari 部署
 
@@ -130,23 +136,23 @@ spark.history.store.maxDiskUsage   20g
 
 
 
-![](/Users/bbw/todo/LearingAndThought/imgs/spark-his/image1.png)
+![](../imgs/spark-his/image1.png)
 
-![image-20181010162750358](/Users/bbw/todo/LearingAndThought/imgs/spark-his/package-path.png)
+![image-20181010162750358](../imgs/spark-his/package-path.png)
 
 ####  3、调整spark history server相关参数，如下：
 
 增大spark_daemon_memory至40g
 
-![image-20181010113823534](/Users/bbw/todo/LearingAndThought/imgs/spark-his/memory-tune.png)
+![image-20181010113823534](../imgs/spark-his/memory-tune.png)
 
 在 Spark2-thrift-sparkconf中修改（或者搜索这些配置项看在哪个模块中配置)
 
-![image-20181010114726561](/Users/bbw/todo/LearingAndThought/imgs/spark-his/his-cnf.png)
+![image-20181010114726561](../imgs/spark-his/his-cnf.png)
 
 然后在 Custom spark2-defaults中添加配置项，如下。
 
-![image-20181010163929862](/Users/bbw/todo/LearingAndThought/imgs/spark-his/other-cnf.png)
+![](../imgs/spark-his/other-cnf.png)
 
 这里的`spark.history.store.path`需要注意，**这是一个local目录，这个文件夹需要创建在spark-history-server所在节点**。因为此处spark.history.kerberos.keytab使用的是`/etc/security/keytabs/spark2.headless.keytab`。在认证之后,
 
@@ -168,9 +174,13 @@ spark.history.store.maxDiskUsage   20g
 /var/lib/ambari-server/resources/scripts/configs.py --user admin --password admin --action set --host hzadg-ambari-dev1.server.163.org --cluster dev --config-type cluster-env --key reinstall_component_package --value false
 ```
 
+#### 6、 在spark history server加载数据若干小时之后（此次升级定为2小时），关闭spark history server，将`spark.history.fs.numReplayThreads`重新设为20，为了满足线上需求。
+
+![](../imgs/spark-his/reset-threadnum.png)
 
 
 
+#### 7、重新启动spark history server
 
 ## 回滚方案
 
@@ -188,6 +198,6 @@ ambari部署，需要将配置的参数重置，然后重启。
 
 ## 对线上的主要影响及风险点
 
-在第一次启动时，需要拉取大量的event log，因此需要耗时一到两小时，期间不能查看spark history 日志。
+ambari方式安装，在第一次启动时，需要拉取大量的event log，因此需要耗时一到两小时，期间不能查看spark history 日志。
 
 风险点：首次启动时，如果说某些大作业eventLog较多，因为historyServer是单机运行，会造成大量网络传输，首次启动需要通过哨兵观察网络使用情况。
