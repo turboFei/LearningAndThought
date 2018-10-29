@@ -1,4 +1,4 @@
-# [转载] https://github.com/maemual/raft-zh_cn/edit/master/raft-zh_cn.md
+# [原文地址](https://github.com/maemual/raft-zh_cn/edit/master/raft-zh_cn.md)
 # 寻找一种易于理解的一致性算法（扩展版）
 
 ## 摘要
