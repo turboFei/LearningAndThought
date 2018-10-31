@@ -96,7 +96,43 @@ at java.lang.Thread.run(Thread.java:745)
 snappy:
 
 ```java
-18/09/13 08:10:08 INFO client.TransportClientFactory: Successfully created connection to hadoop2997.lt.163.org/10.130.127.55:7337 after 0 ms (0 ms spent in bootstraps) 18/09/13 08:10:08 ERROR util.Utils: Aborting task java.io.IOException: FAILED_TO_UNCOMPRESS(5) at org.xerial.snappy.SnappyNative.throw_error(SnappyNative.java:98) at org.xerial.snappy.SnappyNative.rawUncompress(Native Method) at org.xerial.snappy.Snappy.rawUncompress(Snappy.java:474) at org.xerial.snappy.Snappy.uncompress(Snappy.java:513) at org.xerial.snappy.SnappyInputStream.readFully(SnappyInputStream.java:147) at org.xerial.snappy.SnappyInputStream.readHeader(SnappyInputStream.java:99) at org.xerial.snappy.SnappyInputStream.<init>(SnappyInputStream.java:59) at org.apache.spark.io.SnappyCompressionCodec.compressedInputStream(CompressionCodec.scala:158) at org.apache.spark.serializer.SerializerManager.wrapForCompression(SerializerManager.scala:164) at org.apache.spark.serializer.SerializerManager.wrapStream(SerializerManager.scala:125) at org.apache.spark.shuffle.BlockStoreShuffleReader$$anonfun$2.apply(BlockStoreShuffleReader.scala:50) at org.apache.spark.shuffle.BlockStoreShuffleReader$$anonfun$2.apply(BlockStoreShuffleReader.scala:50) at org.apache.spark.storage.ShuffleBlockFetcherIterator.next(ShuffleBlockFetcherIterator.scala:363) at org.apache.spark.storage.ShuffleBlockFetcherIterator.next(ShuffleBlockFetcherIterator.scala:58) at scala.collection.Iterator$$anon$12.nextCur(Iterator.scala:434) at scala.collection.Iterator$$anon$12.hasNext(Iterator.scala:440) at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408) at org.apache.spark.util.CompletionIterator.hasNext(CompletionIterator.scala:32) at org.apache.spark.InterruptibleIterator.hasNext(InterruptibleIterator.scala:39) at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408) at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIterator.sort_addToSorter$(Unknown Source) at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIterator.processNext(Unknown Source) at org.apache.spark.sql.execution.BufferedRowIterator.hasNext(BufferedRowIterator.java:43) at org.apache.spark.sql.execution.WholeStageCodegenExec$$anonfun$8$$anon$1.hasNext(WholeStageCodegenExec.scala:377) at org.apache.spark.sql.execution.datasources.FileFormatWriter$DynamicPartitionWriteTask.execute(FileFormatWriter.scala:364) at org.apache.spark.sql.execution.datasources.FileFormatWriter$$anonfun$org$apache$spark$sql$execution$datasources$FileFormatWriter$$executeTask$3.apply(FileFormatWriter.scala:190) at org.apache.spark.sql.execution.datasources.FileFormatWriter$$anonfun$org$apache$spark$sql$execution$datasources$FileFormatWriter$$executeTask$3.apply(FileFormatWriter.scala:188) at org.apache.spark.util.Utils$.tryWithSafeFinallyAndFailureCallbacks(Utils.scala:1353) at org.apache.spark.sql.execution.datasources.FileFormatWriter$.org$apache$spark$sql$execution$datasources$FileFormatWriter$$executeTask(FileFormatWriter.scala:193) at org.apache.spark.sql.execution.datasources.FileFormatWriter$$anonfun$write$1$$anonfun$3.apply(FileFormatWriter.scala:129) at org.apache.spark.sql.execution.datasources.FileFormatWriter$$anonfun$write$1$$anonfun$3.apply(FileFormatWriter.scala:128) at org.apache.spark.scheduler.ResultTask.runTask(ResultTask.scala:87) at org.apache.spark.scheduler.Task.run(Task.scala:99) at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:325) at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145) at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:615) at java.lang.Thread.run(Thread.java:745)
+18/09/13 08:10:08 INFO client.TransportClientFactory: Successfully created connection to hadoop2997.lt.163.org/10.130.127.55:7337 after 0 ms (0 ms spent in bootstraps) 18/09/13 08:10:08 ERROR util.Utils: Aborting task java.io.IOException: FAILED_TO_UNCOMPRESS(5) 
+at org.xerial.snappy.SnappyNative.throw_error(SnappyNative.java:98)
+at org.xerial.snappy.SnappyNative.rawUncompress(Native Method) 
+at org.xerial.snappy.Snappy.rawUncompress(Snappy.java:474) 
+at org.xerial.snappy.Snappy.uncompress(Snappy.java:513) 
+at org.xerial.snappy.SnappyInputStream.readFully(SnappyInputStream.java:147) 
+at org.xerial.snappy.SnappyInputStream.readHeader(SnappyInputStream.java:99) 
+at org.xerial.snappy.SnappyInputStream.<init>(SnappyInputStream.java:59) 
+at org.apache.spark.io.SnappyCompressionCodec.compressedInputStream(CompressionCodec.scala:158) 
+at org.apache.spark.serializer.SerializerManager.wrapForCompression(SerializerManager.scala:164) 
+at org.apache.spark.serializer.SerializerManager.wrapStream(SerializerManager.scala:125) 
+at org.apache.spark.shuffle.BlockStoreShuffleReader$$anonfun$2.apply(BlockStoreShuffleReader.scala:50) 
+at org.apache.spark.shuffle.BlockStoreShuffleReader$$anonfun$2.apply(BlockStoreShuffleReader.scala:50) 
+at org.apache.spark.storage.ShuffleBlockFetcherIterator.next(ShuffleBlockFetcherIterator.scala:363) 
+at org.apache.spark.storage.ShuffleBlockFetcherIterator.next(ShuffleBlockFetcherIterator.scala:58) 
+at scala.collection.Iterator$$anon$12.nextCur(Iterator.scala:434) 
+at scala.collection.Iterator$$anon$12.hasNext(Iterator.scala:440) 
+at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408) 
+at org.apache.spark.util.CompletionIterator.hasNext(CompletionIterator.scala:32) 
+at org.apache.spark.InterruptibleIterator.hasNext(InterruptibleIterator.scala:39) at scala.collection.Iterator$$anon$11.hasNext(Iterator.scala:408) 
+at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIterator.sort_addToSorter$(Unknown Source) 
+at org.apache.spark.sql.catalyst.expressions.GeneratedClass$GeneratedIterator.processNext(Unknown Source) 
+at org.apache.spark.sql.execution.BufferedRowIterator.hasNext(BufferedRowIterator.java:43) 
+at org.apache.spark.sql.execution.WholeStageCodegenExec$$anonfun$8$$anon$1.hasNext(WholeStageCodegenExec.scala:377) 
+at org.apache.spark.sql.execution.datasources.FileFormatWriter$DynamicPartitionWriteTask.execute(FileFormatWriter.scala:364) 
+at org.apache.spark.sql.execution.datasources.FileFormatWriter$$anonfun$org$apache$spark$sql$execution$datasources$FileFormatWriter$$executeTask$3.apply(FileFormatWriter.scala:190) 
+at org.apache.spark.sql.execution.datasources.FileFormatWriter$$anonfun$org$apache$spark$sql$execution$datasources$FileFormatWriter$$executeTask$3.apply(FileFormatWriter.scala:188) 
+at org.apache.spark.util.Utils$.tryWithSafeFinallyAndFailureCallbacks(Utils.scala:1353) 
+at org.apache.spark.sql.execution.datasources.FileFormatWriter$.org$apache$spark$sql$execution$datasources$FileFormatWriter$$executeTask(FileFormatWriter.scala:193) 
+at org.apache.spark.sql.execution.datasources.FileFormatWriter$$anonfun$write$1$$anonfun$3.apply(FileFormatWriter.scala:129) 
+at org.apache.spark.sql.execution.datasources.FileFormatWriter$$anonfun$write$1$$anonfun$3.apply(FileFormatWriter.scala:128) 
+at org.apache.spark.scheduler.ResultTask.runTask(ResultTask.scala:87) 
+at org.apache.spark.scheduler.Task.run(Task.scala:99) 
+at org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:325) 
+at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145) 
+at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:615) 
+at java.lang.Thread.run(Thread.java:745)
 ```
 
 
@@ -124,6 +160,9 @@ lz4是一种压缩方式。 spark.io.compression.codec 默认为lz4，是用来�
 然后，每个分区的数据是对应一个din。
 
 这里有几个参数。
+
+
+
 | 参数 | 默认值 | 说明 |
 | ------------------------------- | ------------ | ------------------------------------------------------------ |
 | `spark.reducer.maxSizeInFlight` | 48m          | Maximum size of map outputs to fetch simultaneously from each reduce task, in MiB unless otherwise specified. Since each output requires us to create a buffer to receive it, this represents a fixed memory overhead per reduce task, so keep it small unless you have a large amount of memory. |
