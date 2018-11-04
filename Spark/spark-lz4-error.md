@@ -262,3 +262,13 @@ val wrappedStreams = new ShuffleBlockFetcherIterator(
 这个应该算是task失败，只是重新提交task。但是这大概率是din里面的数据都有问题，只是resubmittask，是很小几率让重新执行成功。我认为这里应该对这个exception进行catch，抛出fetchFailed。
 
 从而resubmitStage。
+
+
+
+但是这终归是一种比较讨巧的方法，深层次的，造成这个错误的根本原因到底是什么呢？
+
+
+
+### 相关JIRA:
+
+https://issues.apache.org/jira/browse/SPARK-3958

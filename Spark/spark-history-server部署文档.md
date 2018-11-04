@@ -140,6 +140,8 @@ spark.history.store.maxDiskUsage   40g
 
 ![image-20181010162750358](../imgs/spark-his/package-path.png)
 
+"SPARK2_JOBHISTORYSERVER":"spark/spark-2.3.2-bin-ne-0.0.0.1.tgz"
+
 ####  3、调整spark history server相关参数，如下：
 
 增大spark_daemon_memory至40g
