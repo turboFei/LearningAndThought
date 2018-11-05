@@ -2,3 +2,7 @@
 imgs/.DS_Store
 *.sh
 */todo.md
+*/plan-*.md
+imgs/plan/*
+*.DS_Store
+*/.DS_Store
