@@ -6,3 +6,7 @@ imgs/.DS_Store
 imgs/plan/*
 *.DS_Store
 */.DS_Store
+*/plan
+*/ignore
+*/draft
+
