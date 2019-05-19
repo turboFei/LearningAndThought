@@ -1,3 +1,5 @@
+# 内容移至博客 https://turbofei.github.io
+
 # LearingAndThought
 
 ## [Spark Sql Catalyst](./Spark/spark-sql-catalyst.md)
