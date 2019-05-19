@@ -1,3 +1,5 @@
+# 内容移至博客 https://turbofei.github.io
+
 # LearingAndThought
 
 ## [Scala Future & Thread](https://turbofei.github.io/coding/2019/05/19/scala-concurrent-programming-Future-And-Thread)
